@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CATEGORIES = ['Hot Take', 'Fun Fact', 'Hypothetical'];
 
@@ -15,8 +16,42 @@ export default function HomeScreen() {
   const [cardText, setCardText] = useState(
     '"If every meeting that could have been an email actually became one, we\'d all leave work two hours earlier — and not one decision would change."'
   );
-  const [tip, setTip] = useState('Say it at standup. Watch who laughs and who doesn\'t.');
+  const [tip, setTip] = useState("Say it at standup. Watch who laughs and who doesn't.");
   const [loading, setLoading] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [todayDone, setTodayDone] = useState(false);
+
+  useEffect(() => {
+    loadStreak();
+  }, []);
+
+  async function loadStreak() {
+    try {
+      const lastDate = await AsyncStorage.getItem('lastOpenDate');
+      const savedStreak = await AsyncStorage.getItem('streak');
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+      let currentStreak = parseInt(savedStreak || '0');
+
+      if (lastDate === today) {
+        setTodayDone(true);
+        setStreak(currentStreak);
+      } else if (lastDate === yesterday) {
+        currentStreak += 1;
+        await AsyncStorage.setItem('streak', String(currentStreak));
+        await AsyncStorage.setItem('lastOpenDate', today);
+        setStreak(currentStreak);
+      } else {
+        currentStreak = 1;
+        await AsyncStorage.setItem('streak', '1');
+        await AsyncStorage.setItem('lastOpenDate', today);
+        setStreak(1);
+      }
+    } catch {
+      setStreak(0);
+    }
+  }
 
   async function getNewConversation(category: string) {
     setLoading(true);
@@ -28,7 +63,7 @@ export default function HomeScreen() {
           'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
-        },       
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 300,
@@ -53,10 +88,17 @@ Respond ONLY as JSON, no markdown:
       const parsed = JSON.parse(raw);
       setCardText(`"${parsed.text}"`);
       setTip(parsed.tip || '');
+      markTodayDone();
     } catch {
       setCardText('"Something went wrong. Try again."');
     }
     setLoading(false);
+  }
+
+  async function markTodayDone() {
+    const today = new Date().toDateString();
+    await AsyncStorage.setItem('lastOpenDate', today);
+    setTodayDone(true);
   }
 
   function selectCategory(cat: string) {
@@ -71,6 +113,26 @@ Respond ONLY as JSON, no markdown:
         <Text style={styles.logo}>can<Text style={styles.logoItalic}>dor</Text></Text>
         <View style={styles.planBadge}>
           <Text style={styles.planText}>Free</Text>
+        </View>
+      </View>
+
+      <View style={styles.streakRow}>
+        <View style={styles.streakStat}>
+          <Text style={styles.streakNum}>{streak}</Text>
+          <Text style={styles.streakLabel}>Day streak</Text>
+        </View>
+        <View style={styles.streakDivider} />
+        <View style={styles.streakStat}>
+          <Text style={styles.streakNum}>{todayDone ? '✓' : '–'}</Text>
+          <Text style={styles.streakLabel}>Today</Text>
+        </View>
+        <View style={styles.streakDivider} />
+        <View style={styles.streakMessage}>
+          <Text style={styles.streakHint}>
+            {todayDone
+              ? 'You showed up today. Come back tomorrow.'
+              : 'Open a conversation to start your streak.'}
+          </Text>
         </View>
       </View>
 
@@ -116,12 +178,19 @@ Respond ONLY as JSON, no markdown:
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FDFAF7' },
-  content: { padding: 24, paddingTop: 60 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
+  content: { padding: 24, paddingTop: 60, paddingBottom: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   logo: { fontSize: 28, fontWeight: '700', color: '#2C2018', letterSpacing: -0.5 },
   logoItalic: { fontStyle: 'italic', fontWeight: '400' },
   planBadge: { backgroundColor: '#EDE8E3', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   planText: { fontSize: 11, color: '#7A5C48', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  streakRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 28, borderWidth: 0.5, borderColor: '#E8DDD5' },
+  streakStat: { alignItems: 'center', paddingHorizontal: 12 },
+  streakNum: { fontSize: 24, fontWeight: '700', color: '#2C2018' },
+  streakLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', color: '#A89080', marginTop: 2 },
+  streakDivider: { width: 0.5, height: 36, backgroundColor: '#E8DDD5' },
+  streakMessage: { flex: 1, paddingLeft: 12 },
+  streakHint: { fontSize: 13, color: '#7A5C48', lineHeight: 18 },
   sectionLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', color: '#A89080', marginBottom: 12 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 24, marginBottom: 32, borderWidth: 0.5, borderColor: '#E8DDD5' },
   categoryLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: '#7A5C48', marginBottom: 16 },
