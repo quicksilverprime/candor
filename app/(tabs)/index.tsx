@@ -63,6 +63,7 @@ const QUESTION_TYPES = {
 type QuestionType = keyof typeof QUESTION_TYPES;
 
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/ask`;
+console.log('API URL:', API_URL);
 
 async function fetchQuestion(language: string): Promise<{ type: QuestionType; question: string; context: string } | null> {
   const dateStr = new Date().toLocaleDateString('en-US', {
@@ -384,43 +385,38 @@ export default function HomeScreen() {
         </Animated.View>
       </ScrollView>
 
-      <Modal
-        visible={langPickerVisible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setLangPickerVisible(false)}
-      >
+      {langPickerVisible && (
+  <View style={styles.langDropdown}>
+    <View style={[styles.langPicker, { backgroundColor: t.bg2, borderColor: t.border }]}>
+      <Text style={[styles.langTitle, { color: t.muted }]}>Language</Text>
+      {LANGUAGES.map(lang => (
         <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setLangPickerVisible(false)}
-        >
-          <View style={[styles.langPicker, { backgroundColor: t.bg2, borderColor: t.border }]}>
-            <Text style={[styles.langTitle, { color: t.muted }]}>Language</Text>
-            {LANGUAGES.map(lang => (
-              <TouchableOpacity
-                key={lang.code}
-                style={[
-                  styles.langOption,
-                  { borderColor: t.border },
-                  language === lang.code && { backgroundColor: t.bg },
-                ]}
-                onPress={() => changeLanguage(lang.code)}
-              >
-                <Text style={[styles.langCode, { color: t.accent }]}>{lang.flag}</Text>
-                <View style={styles.langLabels}>
-                  <Text style={[styles.langLabel, { color: t.text }]}>{lang.native}</Text>
-                  <Text style={[styles.langSub, { color: t.muted }]}>{lang.label}</Text>
-                </View>
-                {language === lang.code && (
-                  <Text style={[styles.langCheck, { color: t.accent }]}>✦</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+          key={lang.code}
+          style={[
+            styles.langOption,
+            { borderColor: t.border },
+            language === lang.code && { backgroundColor: t.bg },
+          ]}
+          onPress={() => {
+            console.log('Language tapped:', lang.code);
+            changeLanguage(lang.code);
+          }}        >
+          <Text style={[styles.langCode, { color: t.accent }]}>{lang.flag}</Text>
+          <View style={styles.langLabels}>
+            <Text style={[styles.langLabel, { color: t.text }]}>{lang.native}</Text>
+            <Text style={[styles.langSub, { color: t.muted }]}>{lang.label}</Text>
           </View>
+          {language === lang.code && (
+            <Text style={[styles.langCheck, { color: t.accent }]}>✦</Text>
+          )}
         </TouchableOpacity>
-      </Modal>
+      ))}
+      <TouchableOpacity onPress={() => setLangPickerVisible(false)}>
+        <Text style={[styles.langSub, { color: t.muted, textAlign: 'center', marginTop: 4 }]}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+)}
     </View>
   );
 }
@@ -465,4 +461,10 @@ const styles = StyleSheet.create({
   langLabel: { fontSize: 14, fontWeight: '400' },
   langSub: { fontSize: 11, marginTop: 1 },
   langCheck: { fontSize: 12 },
+  langDropdown: {
+    position: 'absolute',
+    top: 80,
+    right: 24,
+    zIndex: 9999,
+  },
 });
