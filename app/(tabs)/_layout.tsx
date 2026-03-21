@@ -7,15 +7,15 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FDFAF7',
-          borderTopColor: '#E8DDD5',
+          backgroundColor: '#FAF5EE',
+          borderTopColor: '#EDE4D8',
           borderTopWidth: 0.5,
         },
-        tabBarActiveTintColor: '#4A3728',
-        tabBarInactiveTintColor: '#A89080',
+        tabBarActiveTintColor: '#3A4830',
+        tabBarInactiveTintColor: '#A89878',
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
+          fontSize: 10,
+          fontWeight: '500',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
         },
@@ -25,7 +25,7 @@ export default function TabLayout() {
         options={{
           title: 'Today',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 18, color }}>◈</Text>
+            <Text style={{ fontSize: 16, color }}>◈</Text>
           ),
         }}
       />
@@ -34,7 +34,16 @@ export default function TabLayout() {
         options={{
           title: 'Categories',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 18, color }}>⊞</Text>
+            <Text style={{ fontSize: 16, color }}>⊞</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="upgrade"
+        options={{
+          title: 'Pro',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 16, color }}>✦</Text>
           ),
         }}
       />

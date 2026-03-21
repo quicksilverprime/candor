@@ -10,10 +10,38 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const NOTIFICATION_COPY = {
+  spark: [
+    "A question that'll wake you up better than coffee.",
+    "Today's spark is ready. Go light something.",
+    "Curiosity is calling. Open Candor.",
+  ],
+  mirror: [
+    "Today's question asks something quiet of you.",
+    "A moment of truth is waiting.",
+    "Some questions are worth sitting with.",
+  ],
+  gauntlet: [
+    "Today's question won't let you off easy.",
+    "Something uncomfortable is waiting. Good.",
+    "The gauntlet is set. Are you?",
+  ],
+  bridge: [
+    "One question. One real conversation. That's all it takes.",
+    "Today's question builds something between people.",
+    "Connection starts with one honest ask.",
+  ],
+  horizon: [
+    "Your future is asking you something today.",
+    "Today's question points forward. Open it.",
+    "Clarity is waiting. One question away.",
+  ],
+};
+
 export async function registerForPushNotifications() {
   if (!Device.isDevice) {
     console.log('Push notifications only work on a real device');
-    return null;
+    return false;
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -25,8 +53,8 @@ export async function registerForPushNotifications() {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Permission not granted for notifications');
-    return null;
+    console.log('Permission not granted');
+    return false;
   }
 
   if (Platform.OS === 'android') {
@@ -39,23 +67,18 @@ export async function registerForPushNotifications() {
   return true;
 }
 
-export async function scheduleDailyNotification() {
+export async function scheduleDailyNotification(questionType?: string) {
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  const messages = [
-    "Your conversation starter is ready. Make today count.",
-    "Something worth saying is waiting for you.",
-    "One real conversation changes everything.",
-    "Today's spark is ready. Go start something.",
-    "The best talks start with one honest line.",
-  ];
-
-  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+  const type = (questionType as keyof typeof NOTIFICATION_COPY) || 'bridge';
+  const copies = NOTIFICATION_COPY[type] || NOTIFICATION_COPY.bridge;
+  const body = copies[Math.floor(Math.random() * copies.length)];
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'candor',
-      body: randomMessage,
+      body,
+      data: { questionType: type },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

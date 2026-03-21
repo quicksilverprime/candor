@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPushNotifications, scheduleDailyNotification } from '../notifications';
 import Svg, { Path, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -254,6 +255,9 @@ export default function HomeScreen() {
   useEffect(() => {
     loadStreak();
     loadDailyQuestion();
+    registerForPushNotifications().then(granted => {
+      if (granted) scheduleDailyNotification();
+    });
   }, []);
 
   function triggerTransition(newType: QuestionType) {
@@ -362,6 +366,7 @@ Respond ONLY as JSON, no markdown:
       await AsyncStorage.setItem('questionText', parsed.question);
       await AsyncStorage.setItem('questionContext', parsed.context || '');
       await AsyncStorage.setItem('questionType', newType);
+      scheduleDailyNotification(newType);
 
       triggerTransition(newType);
       setQuestion(parsed.question);
